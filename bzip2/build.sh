@@ -2,8 +2,7 @@
 set -eu
 
 recipe_dir=$(dirname $(realpath $0))
-prefix=$(realpath ${1:?})
-version=${2:?}
+version=${1:?}
 
 cd $recipe_dir
 . ../build-common.sh
@@ -23,5 +22,8 @@ cd $(basename $src_filename .tar.gz)
 
 CFLAGS+=" -O2 -fPIC"
 # -e is needed to override explicit assignment to CC, CFLAGS etc. in the Makefile.
-make -e -j $(nproc) bzip2 bzip2recover
+make -e -j $CPU_COUNT bzip2 bzip2recover
+
+prefix=$build_dir/prefix
+mkdir $prefix
 make install PREFIX=$prefix

@@ -1,0 +1,73 @@
+# Run this Action on creating a new tag matching "<library>-<version>-<build>"
+# e.g., foobar-1.2.3-1
+name: Release build
+on:
+  push:
+    tags:
+    - '*-*-*'
+
+jobs:
+  build:
+    name: Build
+    outputs:
+      PACKAGE_NAME: ${{ steps.build-vars.outputs.PACKAGE_NAME }}
+      PACKAGE_VERSION: ${{ steps.build-vars.outputs.PACKAGE_VERSION }}
+      BUILD_NUMBER: ${{ steps.build-vars.outputs.BUILD_NUMBER }}
+    strategy:
+      matrix:
+        abi: ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"]
+
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+
+    - name: Set Build Variables
+      id: build-vars
+      env:
+        TAG_NAME: ${{ github.ref }}
+      run: |
+        export TAG=$(basename $TAG_NAME)
+        echo "TAG=${TAG}"
+        export PACKAGE_NAME_VERSION="${TAG%-*}"
+        export PACKAGE_NAME="${PACKAGE_NAME_VERSION%-*}"
+        export PACKAGE_VERSION="${PACKAGE_NAME_VERSION#*-}"
+        export BUILD_NUMBER="${TAG#*-*-}"
+
+        echo "PACKAGE_NAME=${PACKAGE_NAME}" | tee -a ${GITHUB_OUTPUT}
+        echo "PACKAGE_VERSION=${PACKAGE_VERSION}" | tee -a ${GITHUB_OUTPUT}
+        echo "BUILD_NUMBER=${BUILD_NUMBER}" | tee -a ${GITHUB_OUTPUT}
+
+    - name: Build
+      run: |
+        ./build.sh \
+            ${{ steps.build-vars.outputs.PACKAGE_NAME }} \
+            ${{ steps.build-vars.outputs.PACKAGE_VERSION }} \
+            ${{ steps.build-vars.outputs.BUILD_NUMBER }} \
+            ${{ matrix.abi }}
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4.3.0
+      with:
+        name: dist-${{ matrix.abi }}
+        path: ${{ steps.build-vars.outputs.PACKAGE_NAME }}/dist
+        if-no-files-found: error
+
+  make-release:
+    name: Make Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get Build Artifacts
+      uses: actions/download-artifact@v4.1.1
+      with:
+        pattern: dist-*
+        path: dist
+        merge-multiple: true
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1.13.0
+      with:
+        name: ${{ needs.build.outputs.PACKAGE_NAME }} ${{ needs.build.outputs.PACKAGE_VERSION }}-${{ needs.build.outputs.BUILD_NUMBER }}
+        draft: true
+        artifacts: "dist/*"

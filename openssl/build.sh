@@ -2,8 +2,7 @@
 set -eu
 
 recipe_dir=$(dirname $(realpath $0))
-prefix=$(realpath ${1:?})
-version=${2:?}
+version=${1:?}
 
 cd $recipe_dir
 . ../build-common.sh
@@ -31,26 +30,23 @@ else
     bits="32"
 fi
 ./Configure linux-generic$bits shared
-make -j $(nproc)
+make -j $CPU_COUNT
 
-install_dir="/tmp/openssl-install-$$"
-rm -rf $install_dir
-make install_sw DESTDIR=$install_dir
-tmp_prefix="$install_dir/usr/local"
-rm -rf $prefix/include/openssl
-cp -af $tmp_prefix/include/* $prefix/include
-rm -rf $prefix/lib/lib{crypto,ssl}*.so*
-cp -af $tmp_prefix/lib/*.{so*,a} $prefix/lib
-rm -r $install_dir
+prefix=$build_dir/prefix
+mkdir $prefix
+make install_sw DESTDIR=$prefix
 
-# We add a _chaquopy suffix in case libraries of the same name are provided by Android
-# itself. And we update the SONAME to match, so that anything compiled against the library
-# will store the modified name. This is necessary on API 22 and older, where the dynamic
-# linker ignores the SONAME attribute and uses the filename instead.
+mv $prefix/usr/local/* $prefix
+rm -r $prefix/usr
+
+# We add a _python suffix in case libraries of the same name are provided by Android
+# itself. And we update the SONAME to match, so that anything compiled against the
+# library will store the modified name. This is necessary on API 22 and older, where the
+# dynamic linker ignores the SONAME attribute and uses the filename instead.
 cd $prefix/lib
 for name in crypto ssl; do
     old_name=$(basename $(realpath lib$name.so))  # Follow symlinks.
-    new_name="lib${name}_chaquopy.so"
+    new_name="lib${name}_python.so"
     if [ "$name" = "crypto" ]; then
         crypto_old_name=$old_name
         crypto_new_name=$new_name

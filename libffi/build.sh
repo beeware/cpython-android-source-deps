@@ -2,8 +2,7 @@
 set -eu
 
 recipe_dir=$(dirname $(realpath $0))
-prefix=$(realpath ${1:?})
-version=${2:?}
+version=${1:?}
 
 cd $recipe_dir
 . ../build-common.sh
@@ -21,6 +20,9 @@ cd $build_dir
 tar -xf $version_dir/$src_filename
 cd $(basename $src_filename .tar.gz)
 
+prefix=$build_dir/prefix
+mkdir $prefix
+
 ./configure --host=$host_triplet --prefix=$prefix --disable-shared --with-pic
-make -j $(nproc)
+make -j $CPU_COUNT
 make install
