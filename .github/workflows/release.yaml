@@ -63,4 +63,6 @@ jobs:
     - uses: ncipollo/release-action@v1.13.0
       with:
         name: ${{ needs.build.outputs.PACKAGE_NAME }} ${{ needs.build.outputs.PACKAGE_VERSION }}-${{ needs.build.outputs.BUILD_NUMBER }}
+        body: |
+          ${{ needs.build.outputs.PACKAGE_NAME }} ${{ needs.build.outputs.PACKAGE_VERSION }} (build ${{ needs.build.outputs.BUILD_NUMBER }})
         artifacts: "dist/*"
