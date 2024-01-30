@@ -1,6 +1,6 @@
 # Run this Action on creating a new tag matching "<library>-<version>-<build>"
 # e.g., foobar-1.2.3-1
-name: Release build
+name: Release
 on:
   push:
     tags:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-    name: Build
     outputs:
       PACKAGE_NAME: ${{ steps.build-vars.outputs.PACKAGE_NAME }}
       PACKAGE_VERSION: ${{ steps.build-vars.outputs.PACKAGE_VERSION }}
@@ -19,8 +18,7 @@ jobs:
 
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4.1.1
+    - uses: actions/checkout@v4.1.1
 
     - name: Set Build Variables
       id: build-vars
@@ -46,28 +44,23 @@ jobs:
             ${{ steps.build-vars.outputs.BUILD_NUMBER }} \
             ${{ matrix.abi }}
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4.3.0
+    - uses: actions/upload-artifact@v4.3.0
       with:
         name: dist-${{ matrix.abi }}
         path: ${{ steps.build-vars.outputs.PACKAGE_NAME }}/dist
         if-no-files-found: error
 
-  make-release:
-    name: Make Release
+  release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Get Build Artifacts
-      uses: actions/download-artifact@v4.1.1
+    - uses: actions/download-artifact@v4.1.1
       with:
         pattern: dist-*
         path: dist
         merge-multiple: true
 
-    - name: Create Release
-      uses: ncipollo/release-action@v1.13.0
+    - uses: ncipollo/release-action@v1.13.0
       with:
         name: ${{ needs.build.outputs.PACKAGE_NAME }} ${{ needs.build.outputs.PACKAGE_VERSION }}-${{ needs.build.outputs.BUILD_NUMBER }}
-        draft: true
         artifacts: "dist/*"
