@@ -5,7 +5,7 @@ recipe_dir=$(dirname $(realpath $0))
 version=${1:?}
 
 cd $recipe_dir
-. ../build-common.sh
+. ../android-env.sh
 
 version_dir=$recipe_dir/build/$version
 mkdir -p $version_dir
@@ -13,7 +13,7 @@ cd $version_dir
 src_filename=openssl-$version.tar.gz
 wget -c https://www.openssl.org/source/$src_filename
 
-build_dir=$version_dir/$abi
+build_dir=$version_dir/$HOST
 rm -rf $build_dir
 mkdir $build_dir
 cd $build_dir
@@ -24,7 +24,7 @@ cd $(basename $src_filename .tar.gz)
 CFLAGS+=" -O2"
 export LDLIBS="-latomic"
 
-if [[ $abi =~ '64' ]]; then
+if [[ $HOST =~ '64' ]]; then
     bits="64"
 else
     bits="32"

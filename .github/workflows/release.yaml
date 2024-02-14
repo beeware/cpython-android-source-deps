@@ -9,45 +9,41 @@ on:
 jobs:
   build:
     outputs:
-      PACKAGE_NAME: ${{ steps.build-vars.outputs.PACKAGE_NAME }}
-      PACKAGE_VERSION: ${{ steps.build-vars.outputs.PACKAGE_VERSION }}
-      BUILD_NUMBER: ${{ steps.build-vars.outputs.BUILD_NUMBER }}
+      NAME: ${{ steps.vars.outputs.NAME }}
+      VERSION: ${{ steps.vars.outputs.VERSION }}
+      BUILD: ${{ steps.vars.outputs.BUILD }}
     strategy:
       matrix:
-        abi: ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"]
+        host: ["arm-linux-androideabi", "aarch64-linux-android",
+               "i686-linux-android", "x86_64-linux-android"]
 
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4.1.1
 
     - name: Set Build Variables
-      id: build-vars
+      id: vars
       env:
         TAG_NAME: ${{ github.ref }}
       run: |
-        export TAG=$(basename $TAG_NAME)
-        echo "TAG=${TAG}"
-        export PACKAGE_NAME_VERSION="${TAG%-*}"
-        export PACKAGE_NAME="${PACKAGE_NAME_VERSION%-*}"
-        export PACKAGE_VERSION="${PACKAGE_NAME_VERSION#*-}"
-        export BUILD_NUMBER="${TAG#*-*-}"
-
-        echo "PACKAGE_NAME=${PACKAGE_NAME}" | tee -a ${GITHUB_OUTPUT}
-        echo "PACKAGE_VERSION=${PACKAGE_VERSION}" | tee -a ${GITHUB_OUTPUT}
-        echo "BUILD_NUMBER=${BUILD_NUMBER}" | tee -a ${GITHUB_OUTPUT}
+        TAG=$(basename $TAG_NAME)
+        NAME_VERSION="${TAG%-*}"
+        echo "NAME=${NAME_VERSION%-*}" | tee -a ${GITHUB_OUTPUT}
+        echo "VERSION=${NAME_VERSION#*-}" | tee -a ${GITHUB_OUTPUT}
+        echo "BUILD=${TAG#*-*-}" | tee -a ${GITHUB_OUTPUT}
 
     - name: Build
       run: |
         ./build.sh \
-            ${{ steps.build-vars.outputs.PACKAGE_NAME }} \
-            ${{ steps.build-vars.outputs.PACKAGE_VERSION }} \
-            ${{ steps.build-vars.outputs.BUILD_NUMBER }} \
-            ${{ matrix.abi }}
+            ${{ steps.vars.outputs.NAME }} \
+            ${{ steps.vars.outputs.VERSION }} \
+            ${{ steps.vars.outputs.BUILD }} \
+            ${{ matrix.host }}
 
     - uses: actions/upload-artifact@v4.3.0
       with:
-        name: dist-${{ matrix.abi }}
-        path: ${{ steps.build-vars.outputs.PACKAGE_NAME }}/dist
+        name: ${{ matrix.host }}
+        path: ${{ steps.vars.outputs.NAME }}/build/${{ steps.vars.outputs.VERSION }}/${{ matrix.host }}/*.tar.gz
         if-no-files-found: error
 
   release:
@@ -56,13 +52,11 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4.1.1
       with:
-        pattern: dist-*
         path: dist
         merge-multiple: true
 
     - uses: ncipollo/release-action@v1.13.0
       with:
-        name: ${{ needs.build.outputs.PACKAGE_NAME }} ${{ needs.build.outputs.PACKAGE_VERSION }}-${{ needs.build.outputs.BUILD_NUMBER }}
-        body: |
-          ${{ needs.build.outputs.PACKAGE_NAME }} ${{ needs.build.outputs.PACKAGE_VERSION }} (build ${{ needs.build.outputs.BUILD_NUMBER }})
+        name: ${{ needs.build.outputs.NAME }} ${{ needs.build.outputs.VERSION }}-${{ needs.build.outputs.BUILD }}
+        body: ${{ needs.build.outputs.NAME }} ${{ needs.build.outputs.VERSION }} (build ${{ needs.build.outputs.BUILD }})
         artifacts: "dist/*"

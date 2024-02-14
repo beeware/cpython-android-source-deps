@@ -1,0 +1,13 @@
+--- a/sqlite3.c	2024-01-30 16:24:10
++++ b/sqlite3.c	2024-02-14 21:37:27
+@@ -39263,7 +39263,9 @@
+   ** huge problem. Incorrectly concluding that the GNU version is available
+   ** could lead to a segfault though.
+   */
+-#if defined(STRERROR_R_CHAR_P) || defined(__USE_GNU)
++  /* CPython: removed __USE_GNU, because Android doesn't provide the GNU version of
++   * this function until API level 23. */
++#if defined(STRERROR_R_CHAR_P) /* || defined(__USE_GNU) */
+   zErr =
+ # endif
+   strerror_r(iErrno, aErr, sizeof(aErr)-1);
