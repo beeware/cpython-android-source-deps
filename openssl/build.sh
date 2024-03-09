@@ -20,6 +20,8 @@ cd $build_dir
 tar -xf $version_dir/$src_filename
 cd $(basename $src_filename .tar.gz)
 
+patch -p1 -i $recipe_dir/at_secure.patch
+
 # CFLAGS environment variable replaces default flags rather than adding to them.
 CFLAGS+=" -O2"
 export LDLIBS="-latomic"
