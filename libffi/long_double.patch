@@ -1,0 +1,127 @@
+--- a/src/x86/ffi64.c	2022-10-23 16:23:27
++++ b/src/x86/ffi64.c	2024-03-20 17:28:09
+@@ -91,6 +91,18 @@
+     X86_64_SSE_CLASS,
+     X86_64_SSESF_CLASS,
+     X86_64_SSEDF_CLASS,
++
++    // CPython: `long double` is usually 80 bits on x86_64, padded to 128 bits for
++    // alignment. But Android uses the full IEEE quad-precision format (__float128), so
++    // we add a "tetra float" class. For more details, see the x86_64 "System V ABI" at
++    // https://gitlab.com/x86-psABIs/x86-64-ABI.
++    //
++    // This patch does NOT implement the following:
++    //   * The corresponding fix for 32-bit x86, where the standard ABI uses 80 bits
++    //     padded to 96, but Android uses 64.
++    //   * Complex numbers (ctypes doesn't support them)
++    X86_64_SSETF_CLASS,
++
+     X86_64_SSEUP_CLASS,
+     X86_64_X87_CLASS,
+     X86_64_X87UP_CLASS,
+@@ -211,10 +223,15 @@
+       return 1;
+ #if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
+     case FFI_TYPE_LONGDOUBLE:
++#ifdef __ANDROID__  // CPython addition
++      classes[0] = X86_64_SSETF_CLASS;
++      return 1;
++#else
+       classes[0] = X86_64_X87_CLASS;
+       classes[1] = X86_64_X87UP_CLASS;
+       return 2;
+ #endif
++#endif
+     case FFI_TYPE_STRUCT:
+       {
+ 	const size_t UNITS_PER_WORD = 8;
+@@ -371,6 +388,7 @@
+       case X86_64_SSE_CLASS:
+       case X86_64_SSESF_CLASS:
+       case X86_64_SSEDF_CLASS:
++      case X86_64_SSETF_CLASS:  // CPython addition
+ 	nsse++;
+ 	break;
+       case X86_64_NO_CLASS:
+@@ -456,7 +474,11 @@
+       break;
+ #if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
+     case FFI_TYPE_LONGDOUBLE:
++#ifdef __ANDROID__  // CPython addition
++      flags = UNIX64_RET_XMM128;
++#else
+       flags = UNIX64_RET_X87;
++#endif
+       break;
+ #endif
+     case FFI_TYPE_STRUCT:
+@@ -661,6 +683,9 @@
+ 		  break;
+ 		case X86_64_SSESF_CLASS:
+ 		  memcpy (&reg_args->sse[ssecount++].i32, a, sizeof(UINT32));
++		  break;
++		case X86_64_SSETF_CLASS:  // CPython addition
++		  memcpy (&reg_args->sse[ssecount++].i128, a, sizeof(UINT128));
+ 		  break;
+ 		default:
+ 		  abort();
+--- a/src/x86/internal64.h	2022-10-23 16:23:27
++++ b/src/x86/internal64.h	2024-03-20 13:01:43
+@@ -8,14 +8,19 @@
+ #define UNIX64_RET_INT64	7
+ #define UNIX64_RET_XMM32	8
+ #define UNIX64_RET_XMM64	9
+-#define UNIX64_RET_X87		10
+-#define UNIX64_RET_X87_2	11
+-#define UNIX64_RET_ST_XMM0_RAX	12
+-#define UNIX64_RET_ST_RAX_XMM0	13
+-#define UNIX64_RET_ST_XMM0_XMM1	14
+-#define UNIX64_RET_ST_RAX_RDX	15
+ 
+-#define UNIX64_RET_LAST		15
++// CPython addition. Because of the way the jump tables work in unix64.S, this can't
++// simply be appended to the end of the list.
++#define UNIX64_RET_XMM128	10
++
++#define UNIX64_RET_X87		11
++#define UNIX64_RET_X87_2	12
++#define UNIX64_RET_ST_XMM0_RAX	13
++#define UNIX64_RET_ST_RAX_XMM0	14
++#define UNIX64_RET_ST_XMM0_XMM1	15
++#define UNIX64_RET_ST_RAX_RDX	16
++
++#define UNIX64_RET_LAST		16
+ 
+ #define UNIX64_FLAG_RET_IN_MEM	(1 << 10)
+ #define UNIX64_FLAG_XMM_ARGS	(1 << 11)
+diff -ur a/src/x86/unix64.S b/src/x86/unix64.S
+--- a/src/x86/unix64.S	2022-10-23 16:23:27
++++ b/src/x86/unix64.S	2024-03-20 13:42:57
+@@ -177,6 +177,13 @@
+ 	_CET_ENDBR
+ 	movq	%xmm0, (%rdi)
+ 	ret
++
++/* CPython addition	*/
++E(L(store_table), UNIX64_RET_XMM128)
++	_CET_ENDBR
++	movdqa	%xmm0, (%rdi)
++	ret
++
+ E(L(store_table), UNIX64_RET_X87)
+ 	_CET_ENDBR
+ 	fstpt	(%rdi)
+@@ -362,6 +369,13 @@
+ 	_CET_ENDBR
+ 	movq	(%rsi), %xmm0
+ 	ret
++
++/* CPython addition	*/
++E(L(load_table), UNIX64_RET_XMM128)
++	_CET_ENDBR
++	movdqa	(%rsi), %xmm0
++	ret
++
+ E(L(load_table), UNIX64_RET_X87)
+ 	_CET_ENDBR
+ 	fldt	(%rsi)

@@ -20,6 +20,7 @@ cd $build_dir
 tar -xf $version_dir/$src_filename
 cd $(basename $src_filename .tar.gz)
 
+patch -p1 -i $recipe_dir/long_double.patch
 patch -p1 -i $recipe_dir/open_temp_exec_file.patch
 
 prefix=$build_dir/prefix
