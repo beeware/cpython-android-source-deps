@@ -11,7 +11,7 @@ version_dir=$recipe_dir/build/$version
 mkdir -p $version_dir
 cd $version_dir
 src_filename=openssl-$version.tar.gz
-wget -c https://www.openssl.org/source/$src_filename
+wget -c https://github.com/openssl/openssl/releases/download/openssl-$version/$src_filename
 
 build_dir=$version_dir/$HOST
 rm -rf $build_dir
