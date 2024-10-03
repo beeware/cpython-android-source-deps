@@ -11,7 +11,13 @@ version_dir=$recipe_dir/build/$version
 mkdir -p $version_dir
 cd $version_dir
 src_filename=openssl-$version.tar.gz
-wget -c https://github.com/openssl/openssl/releases/download/openssl-$version/$src_filename
+
+if echo $version | grep -q '^1\.'; then
+    tag="OpenSSL_$(echo $version | sed 's/\./_/g')"
+else
+    tag="openssl-$version"
+fi
+wget -c "https://github.com/openssl/openssl/releases/download/$tag/$src_filename"
 
 build_dir=$version_dir/$HOST
 rm -rf $build_dir
