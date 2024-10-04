@@ -17,7 +17,7 @@ jobs:
         host: ["arm-linux-androideabi", "aarch64-linux-android",
                "i686-linux-android", "x86_64-linux-android"]
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4.1.1
 
@@ -48,7 +48,7 @@ jobs:
 
   release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/download-artifact@v4.1.7
       with:
