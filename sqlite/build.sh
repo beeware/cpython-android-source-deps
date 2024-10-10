@@ -43,6 +43,11 @@ make install prefix=$prefix
 cd $prefix/lib
 for name in sqlite3; do
     old_name=$(basename $(realpath lib$name.so))  # Follow symlinks.
+
+    # Strip before patching, otherwise the libraries may be corrupted:
+    # https://github.com/NixOS/patchelf/issues?q=is%3Aissue+strip+in%3Atitle
+    "$STRIP" "$old_name"
+
     new_name="lib${name}_python.so"
     mv "$old_name" "$new_name"
     ln -s "$new_name" "$old_name"

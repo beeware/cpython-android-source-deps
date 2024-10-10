@@ -54,6 +54,11 @@ rm -r $prefix/usr
 cd $prefix/lib
 for name in crypto ssl; do
     old_name=$(basename $(realpath lib$name.so))  # Follow symlinks.
+
+    # Strip before patching, otherwise the libraries may be corrupted:
+    # https://github.com/NixOS/patchelf/issues?q=is%3Aissue+strip+in%3Atitle
+    "$STRIP" "$old_name"
+
     new_name="lib${name}_python.so"
     if [ "$name" = "crypto" ]; then
         crypto_old_name=$old_name

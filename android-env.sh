@@ -78,11 +78,7 @@ fi
 
 if [ -n "${PREFIX:-}" ]; then
     abs_prefix=$(realpath $PREFIX)
-
-    # Use -idirafter so that package-specified -I directories take priority. For
-    # example, grpcio provides its own BoringSSL headers which must be used rather than
-    # our OpenSSL.
-    CFLAGS="$CFLAGS -idirafter $abs_prefix/include"
+    CFLAGS="$CFLAGS -I$abs_prefix/include"
     LDFLAGS="$LDFLAGS -L$abs_prefix/lib"
 
     export PKG_CONFIG="pkg-config --define-prefix"
