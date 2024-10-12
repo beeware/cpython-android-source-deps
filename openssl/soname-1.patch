@@ -1,0 +1,24 @@
+--- a/Configurations/unix-Makefile.tmpl	2023-09-11 14:08:11.000000000 +0000
++++ b/Configurations/unix-Makefile.tmpl	2024-10-12 17:57:17.055533654 +0000
+@@ -66,7 +66,20 @@
+      sub shlib {
+          my $lib = shift;
+          return () if $disabled{shared} || $lib =~ /\.a$/;
+-         return $unified_info{sharednames}->{$lib}. $shlibvariant. '$(SHLIB_EXT)';
++
++         # CPython: We add a _python suffix to avoid conflict with libraries of the
++         # same name that are provided by Android itself, or other components of an
++         # app.
++         #
++         # We used to do this with patchelf, but patching a library before stripping
++         # it may corrupt it (https://github.com/NixOS/patchelf/issues/507). And the
++         # Android Gradle plugin will strip all libraries in an app, if its preferred
++         # NDK version is installed.
++         #
++         # We can't do this with the shlib_variant setting either, because that
++         # would change the symbol versions, and break binary compatibliity with
++         # existing Chaquopy wheels.
++         return $unified_info{sharednames}->{$lib}. '_python'. '$(SHLIB_EXT)';
+      }
+      sub shlib_simple {
+          my $lib = shift;

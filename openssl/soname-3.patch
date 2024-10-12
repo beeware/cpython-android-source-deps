@@ -1,0 +1,24 @@
+--- a/Configurations/platform/Unix.pm	2024-09-03 13:30:13.000000000 +0000
++++ b/Configurations/platform/Unix.pm	2024-10-12 17:53:57.971844640 +0000
+@@ -54,8 +54,20 @@
+ }
+ 
+ sub sharedname {
++    # CPython: We add a _python suffix to avoid conflict with libraries of the
++    # same name that are provided by Android itself, or other components of an
++    # app.
++    #
++    # We used to do this with patchelf, but patching a library before stripping
++    # it may corrupt it (https://github.com/NixOS/patchelf/issues/507). And the
++    # Android Gradle plugin will strip all libraries in an app, if its preferred
++    # NDK version is installed.
++    #
++    # We can't do this with the shlib_variant setting either, because that
++    # would change the symbol versions, and break binary compatibliity with
++    # existing Chaquopy wheels.
+     return platform::BASE::__concat(platform::BASE->sharedname($_[1]),
+-                                    ($_[0]->shlibvariant() // ''));
++                                    '_python');
+ }
+ 
+ sub sharedname_simple {

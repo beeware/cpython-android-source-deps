@@ -1,0 +1,21 @@
+--- a/Configurations/15-android-python.conf	1970-01-01 00:00:00.000000000 +0000
++++ b/Configurations/15-android-python.conf	2024-10-12 15:18:42.238444227 +0000
+@@ -0,0 +1,18 @@
++# CPython: OpenSSL comes with an "android" configuration, but we don't use it
++# because it mostly duplicates what we already have in android-env.sh, but in a
++# very complicated way.
++
++my %targets = (
++    "android-python32" => {
++        inherit_from     => [ "linux-generic32" ],
++
++        # The Android Gradle plugin will only package libraries whose names end
++        # with ".so".
++        shared_extension => ".so",
++    },
++
++    "android-python64" => {
++        inherit_from     => [ "linux-generic64" ],
++        shared_extension => ".so",
++    },
++);

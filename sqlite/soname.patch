@@ -1,0 +1,23 @@
+--- a/configure	2024-04-15 13:46:16.000000000 +0000
++++ b/configure	2024-10-12 18:41:30.139425614 +0000
+@@ -12522,8 +12522,18 @@
+   version_type=none # Android doesn't support versioned libraries.
+   need_lib_prefix=no
+   need_version=no
+-  library_names_spec='$libname$release$shared_ext'
+-  soname_spec='$libname$release$shared_ext'
++
++  # CPython: We add a _python suffix to avoid conflict with libraries of the
++  # same name that are provided by Android itself, or other components of an
++  # app.
++  #
++  # We used to do this with patchelf, but patching a library before stripping
++  # it may corrupt it (https://github.com/NixOS/patchelf/issues/507). And the
++  # Android Gradle plugin will strip all libraries in an app, if its preferred
++  # NDK version is installed.
++  library_names_spec='${libname}_python$release$shared_ext $libname$release$shared_ext'
++  soname_spec='${libname}_python$release$shared_ext'
++
+   finish_cmds=
+   shlibpath_var=LD_LIBRARY_PATH
+   shlibpath_overrides_runpath=yes
