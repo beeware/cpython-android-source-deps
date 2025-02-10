@@ -1,23 +1,39 @@
---- a/configure	2024-04-15 13:46:16.000000000 +0000
-+++ b/configure	2024-10-12 18:41:30.139425614 +0000
-@@ -12522,8 +12522,18 @@
-   version_type=none # Android doesn't support versioned libraries.
-   need_lib_prefix=no
-   need_version=no
--  library_names_spec='$libname$release$shared_ext'
--  soname_spec='$libname$release$shared_ext'
+--- a/Makefile.in	2025-02-06 13:59:25
++++ b/Makefile.in	2025-02-10 19:15:31
+@@ -120,7 +120,17 @@
+   $(LDFLAGS.math) $(LDFLAGS.dlopen) \
+   $(LDFLAGS.zlib) $(LDFLAGS.icu) \
+   $(LDFLAGS.configure)
+-LDFLAGS.libsqlite3.soname = @LDFLAGS_LIBSQLITE3_SONAME@
 +
-+  # CPython: We add a _python suffix to avoid conflict with libraries of the
-+  # same name that are provided by Android itself, or other components of an
-+  # app.
-+  #
-+  # We used to do this with patchelf, but patching a library before stripping
-+  # it may corrupt it (https://github.com/NixOS/patchelf/issues/507). And the
-+  # Android Gradle plugin will strip all libraries in an app, if its preferred
-+  # NDK version is installed.
-+  library_names_spec='${libname}_python$release$shared_ext $libname$release$shared_ext'
-+  soname_spec='${libname}_python$release$shared_ext'
++# CPython: We add a _python suffix to avoid conflict with libraries of the
++# same name that are provided by Android itself, or other components of an
++# app.
++#
++# We used to do this with patchelf, but patching a library before stripping
++# it may corrupt it (https://github.com/NixOS/patchelf/issues/507). And the
++# Android Gradle plugin will strip all libraries in an app, if its preferred
++# NDK version is installed.
++LDFLAGS.libsqlite3.soname = -Wl,-soname,libsqlite3_python.so
 +
-   finish_cmds=
-   shlibpath_var=LD_LIBRARY_PATH
-   shlibpath_overrides_runpath=yes
+ CFLAGS.libsqlite3 = -I. $(CFLAGS.core) $(CFLAGS.icu) $(OPT_FEATURE_FLAGS)
+
+ sqlite3.o:	sqlite3.h sqlite3.c
+@@ -140,12 +150,13 @@
+
+ install-so-1: $(install-dir.lib) $(libsqlite3.SO)
+ 	$(INSTALL) $(libsqlite3.SO) "$(install-dir.lib)"
++	# CPython: see comment above about the _python suffix.
+ 	@echo "Setting up $(libsqlite3.SO) symlinks..."; \
+ 		cd "$(install-dir.lib)" || exit $$?; \
+-		rm -f $(libsqlite3.SO).0 $(libsqlite3.SO).$(PACKAGE_VERSION) || exit $$?; \
+-		mv $(libsqlite3.SO) $(libsqlite3.SO).$(PACKAGE_VERSION) || exit $$?; \
+-		ln -s $(libsqlite3.SO).$(PACKAGE_VERSION) $(libsqlite3.SO) || exit $$?; \
+-		ln -s $(libsqlite3.SO).$(PACKAGE_VERSION) $(libsqlite3.SO).0 || exit $$?; \
++		rm -f $(libsqlite3.SO).0 libsqlite3_python.so || exit $$?; \
++		mv $(libsqlite3.SO) libsqlite3_python.so || exit $$?; \
++		ln -s libsqlite3_python.so $(libsqlite3.SO) || exit $$?; \
++		ln -s libsqlite3_python.so $(libsqlite3.SO).0 || exit $$?; \
+ 		ls -la $(libsqlite3.SO) $(libsqlite3.SO).[03]*; \
+ 		if [ -e $(libsqlite3.SO).0.8.6 ]; then \
+ 			echo "ACHTUNG: legacy libtool-compatible install found. Re-linking it..."; \
