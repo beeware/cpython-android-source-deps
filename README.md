@@ -5,4 +5,4 @@ CPython for Android.
 
 Pre-compiled versions are published on the GitHub releases page of this repository. A
 new release is triggered by pushing a tag in a specific format – for details, see
-`.github/workflows`.
+[`.github/workflows/release.yaml`](https://github.com/beeware/cpython-android-source-deps/blob/main/.github/workflows/release.yaml).
