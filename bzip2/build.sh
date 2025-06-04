@@ -20,6 +20,8 @@ cd $build_dir
 tar -xf $version_dir/$src_filename
 cd $(basename $src_filename .tar.gz)
 
+patch -p1 -i "$recipe_dir/symlink.patch"
+
 CFLAGS+=" -O2 -fPIC"
 # -e is needed to override explicit assignment to CC, CFLAGS etc. in the Makefile.
 make -e -j $CPU_COUNT bzip2 bzip2recover
