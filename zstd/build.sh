@@ -5,6 +5,11 @@ recipe_dir=$(dirname $(realpath $0))
 version=${1:?}
 
 cd $recipe_dir
+
+# zstd was added to Python in version 3.14, which uses this minimum API level.
+# zstd also requires the same API level for fseeko and ftello on 32-bit ABIs
+# (https://android.googlesource.com/platform/bionic/+/HEAD/docs/32-bit-abi.md).
+ANDROID_API_LEVEL=24
 . ../android-env.sh
 
 version_dir=$recipe_dir/build/$version
