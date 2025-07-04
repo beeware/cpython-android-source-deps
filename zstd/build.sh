@@ -28,5 +28,5 @@ cd zstd-$version
 prefix=$build_dir/prefix
 mkdir $prefix
 
-make -j $CPU_COUNT -C lib libzstd.a-release PREFIX=$prefix
-make -C lib install-static PREFIX=$prefix
+make -j $CPU_COUNT -C lib libzstd.a-release libzstd.pc PREFIX=$prefix
+make -C lib install-static install-pc PREFIX=$prefix
