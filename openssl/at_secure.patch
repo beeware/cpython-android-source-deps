@@ -4,12 +4,12 @@
 
  int OPENSSL_issetugid(void)
  {
--# ifdef OSSL_IMPLEMENT_GETAUXVAL
+-#ifdef OSSL_IMPLEMENT_GETAUXVAL
 +// CPython: due to the way Android apps are started, they always have AT_SECURE set
 +// (https://android.googlesource.com/platform/bionic/+/6bb01b6%5E%21/). But all their
 +// environment variables come either from the operating system or the app itself, so
 +// there's no security risk here.
-+# if defined(OSSL_IMPLEMENT_GETAUXVAL) && !defined(__ANDROID__)
++#if defined(OSSL_IMPLEMENT_GETAUXVAL) && !defined(__ANDROID__)
      return getauxval(AT_SECURE) != 0;
- # else
+ #else
      return getuid() != geteuid() || getgid() != getegid();
