@@ -32,5 +32,5 @@ mkdir $prefix
 # ld.lld: error: relocation R_386_PC32 cannot be used
 # against symbol 'HUF_writeCTable_wksp'; recompile with -fPIC
 CFLAGS+=" -fPIC"
-make -j $CPU_COUNT -C lib libzstd.a-release libzstd.pc PREFIX=$prefix
+make -j $CPU_COUNT -C lib libzstd.a-release libzstd.pc PREFIX=$prefix VERBOSE=1
 make -C lib install-static install-pc install-includes PREFIX=$prefix
