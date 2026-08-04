@@ -40,6 +40,10 @@ cd $(basename $src_filename .tar.gz)
 patch -p1 -i "$recipe_dir/soname.patch"
 
 CFLAGS+=" -Os"  # This is off by default, but it's recommended in the README.
+
+# These flags should be kept in sync with CPython's macOS build in
+# Mac/BuildScript/build-installer.py.
+CFLAGS+=" -DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_FTS4 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_PERCENTILE -DSQLITE_ENABLE_RTREE -DSQLITE_OMIT_AUTOINIT -DSQLITE_TCL=0"
 ./configure --host=$HOST --disable-static
 make -j $CPU_COUNT
 
